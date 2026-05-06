@@ -1,0 +1,17 @@
+schema_version,scenario_id,variant_id,level_duration_sec,event_id,trigger_time_sec,trigger_tick,monster_id,count,spawn_angle_clock,spawn_distance_px,spawn_random_radius_px,interval_tick,spawn_zone_id,seed_offset,attr_hp_scale,attr_atk_scale,attr_spd_scale,phase_tag,notes
+v1,baseline_horde,A,180,1001,0.0,0,1,12,2,860,120,2,0,0,1.00,1.00,1.00,build_up,A-开场低压热身
+v1,baseline_horde,A,180,1002,15.0,300,1,18,3,900,130,2,0,1,1.06,1.03,1.01,sustain,A-平滑升压1
+v1,baseline_horde,A,180,1003,30.0,600,1,24,4,930,140,2,0,2,1.12,1.06,1.02,sustain,A-平滑升压2
+v1,baseline_horde,A,180,1004,45.0,900,1,32,5,960,150,1,0,3,1.20,1.10,1.03,sustain,A-压力持续上升
+v1,baseline_horde,A,180,1005,60.0,1200,2,28,7,980,220,1,1,4,1.26,1.12,1.04,sustain,A-加入散布怪测试AOE边界
+v1,baseline_horde,A,180,1006,90.0,1800,2,40,8,1020,240,1,1,5,1.36,1.18,1.06,sustain,A-中后段密度提升
+v1,baseline_horde,A,180,1007,120.0,2400,3,56,12,1080,80,1,2,6,1.50,1.25,1.08,sustain,A-前方压迫强化走位压力
+v1,baseline_horde,A,180,1008,150.0,3000,3,72,12,1120,90,1,2,7,1.65,1.35,1.10,burst,A-末段压力冲刺
+v1,baseline_horde,B,180,2001,0.0,0,1,10,1,840,110,2,0,100,1.00,1.00,1.00,build_up,B-开场观察窗口
+v1,baseline_horde,B,180,2002,20.0,400,1,38,11,1000,70,1,0,101,1.18,1.10,1.03,burst,B-第一波冲击
+v1,baseline_horde,B,180,2003,35.0,700,1,8,6,880,180,3,0,102,1.10,1.05,1.01,rest,B-回落与重整
+v1,baseline_horde,B,180,2004,55.0,1100,2,52,10,1040,220,1,1,103,1.30,1.18,1.05,burst,B-第二波冲击
+v1,baseline_horde,B,180,2005,75.0,1500,1,12,4,900,160,3,0,104,1.18,1.08,1.02,rest,B-短暂空档
+v1,baseline_horde,B,180,2006,95.0,1900,3,64,12,1100,80,1,2,105,1.45,1.30,1.07,burst,B-第三波冲击
+v1,baseline_horde,B,180,2007,120.0,2400,2,14,9,920,170,3,1,106,1.28,1.15,1.03,rest,B-Boss前清场窗口
+v1,baseline_horde,B,180,2008,145.0,2900,3,92,12,1160,95,1,2,107,1.70,1.45,1.10,burst,B-终局高峰

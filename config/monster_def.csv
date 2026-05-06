@@ -1,0 +1,4 @@
+schema_version,monster_id,monster_name,base_attack,base_attack_interval_sec,base_attack_range_px,base_hp,base_move_speed_px_sec,notes
+v1,1,walker,12,1.20,28,90,140,基础近战小怪
+v1,2,runner,9,0.95,24,70,210,高机动压迫型
+v1,3,brute,20,1.60,36,260,110,高生存高单次伤害

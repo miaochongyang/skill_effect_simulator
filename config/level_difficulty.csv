@@ -1,0 +1,12 @@
+schema_version,scenario_id,variant_id,phase_id,start_time_sec,end_time_sec,monster_id,global_atk_scale,global_atk_interval_scale,global_atk_range_scale,global_hp_scale,global_move_speed_scale,type_atk_scale,type_atk_interval_scale,type_atk_range_scale,type_hp_scale,type_move_speed_scale,notes
+v1,baseline_horde,A,1,0,45,0,1.00,1.00,1.00,1.00,1.00,1.00,1.00,1.00,1.00,1.00,A-前期开场全局
+v1,baseline_horde,A,2,45,90,0,1.10,0.95,1.00,1.15,1.05,1.00,1.00,1.00,1.00,1.00,A-中期全局升压
+v1,baseline_horde,A,3,90,180,0,1.25,0.88,1.05,1.35,1.12,1.00,1.00,1.00,1.00,1.00,A-后期全局升压
+v1,baseline_horde,A,3,90,180,2,1.25,0.88,1.05,1.35,1.12,1.10,0.92,1.00,1.00,1.12,A-runner后期额外加速
+v1,baseline_horde,B,1,0,35,0,1.00,1.00,1.00,1.00,1.00,1.00,1.00,1.00,1.00,1.00,B-观察窗口
+v1,baseline_horde,B,2,35,75,0,1.30,0.82,1.08,1.28,1.10,1.00,1.00,1.00,1.00,1.00,B-第一高峰
+v1,baseline_horde,B,3,75,95,0,1.05,0.98,1.00,1.05,1.02,1.00,1.00,1.00,1.00,1.00,B-回落窗口
+v1,baseline_horde,B,4,95,130,0,1.42,0.76,1.12,1.40,1.16,1.00,1.00,1.00,1.00,1.00,B-第二高峰
+v1,baseline_horde,B,5,130,145,0,1.08,0.95,1.00,1.08,1.03,1.00,1.00,1.00,1.00,1.00,B-Boss前清场
+v1,baseline_horde,B,6,145,180,0,1.55,0.70,1.16,1.58,1.20,1.00,1.00,1.00,1.00,1.00,B-终局高峰
+v1,baseline_horde,B,6,145,180,3,1.55,0.70,1.16,1.58,1.20,1.20,0.90,1.08,1.18,1.00,B-brute终局额外强化
