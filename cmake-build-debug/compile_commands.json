@@ -1,0 +1,62 @@
+[
+{
+  "directory": "D:/code/miaochongyang/simulator_battle/cmake-build-debug",
+  "command": "C:\\Users\\topjoy\\AppData\\Local\\Programs\\CLion\\bin\\mingw\\bin\\g++.exe -ID:/code/miaochongyang/simulator_battle/src -g -std=c++20 -fdiagnostics-color=always -o CMakeFiles\\simulator_battle.dir\\src\\main.cpp.obj -c D:\\code\\miaochongyang\\simulator_battle\\src\\main.cpp",
+  "file": "D:/code/miaochongyang/simulator_battle/src/main.cpp",
+  "output": "D:/code/miaochongyang/simulator_battle/cmake-build-debug/CMakeFiles/simulator_battle.dir/src/main.cpp.obj"
+},
+{
+  "directory": "D:/code/miaochongyang/simulator_battle/cmake-build-debug",
+  "command": "C:\\Users\\topjoy\\AppData\\Local\\Programs\\CLion\\bin\\mingw\\bin\\g++.exe -ID:/code/miaochongyang/simulator_battle/src -g -std=c++20 -fdiagnostics-color=always -o CMakeFiles\\simulator_battle.dir\\src\\ecs\\monster_pool.cpp.obj -c D:\\code\\miaochongyang\\simulator_battle\\src\\ecs\\monster_pool.cpp",
+  "file": "D:/code/miaochongyang/simulator_battle/src/ecs/monster_pool.cpp",
+  "output": "D:/code/miaochongyang/simulator_battle/cmake-build-debug/CMakeFiles/simulator_battle.dir/src/ecs/monster_pool.cpp.obj"
+},
+{
+  "directory": "D:/code/miaochongyang/simulator_battle/cmake-build-debug",
+  "command": "C:\\Users\\topjoy\\AppData\\Local\\Programs\\CLion\\bin\\mingw\\bin\\g++.exe -ID:/code/miaochongyang/simulator_battle/src -g -std=c++20 -fdiagnostics-color=always -o CMakeFiles\\simulator_battle.dir\\src\\spatial\\uniform_grid.cpp.obj -c D:\\code\\miaochongyang\\simulator_battle\\src\\spatial\\uniform_grid.cpp",
+  "file": "D:/code/miaochongyang/simulator_battle/src/spatial/uniform_grid.cpp",
+  "output": "D:/code/miaochongyang/simulator_battle/cmake-build-debug/CMakeFiles/simulator_battle.dir/src/spatial/uniform_grid.cpp.obj"
+},
+{
+  "directory": "D:/code/miaochongyang/simulator_battle/cmake-build-debug",
+  "command": "C:\\Users\\topjoy\\AppData\\Local\\Programs\\CLion\\bin\\mingw\\bin\\g++.exe -ID:/code/miaochongyang/simulator_battle/src -g -std=c++20 -fdiagnostics-color=always -o CMakeFiles\\simulator_battle.dir\\src\\systems\\wave_system.cpp.obj -c D:\\code\\miaochongyang\\simulator_battle\\src\\systems\\wave_system.cpp",
+  "file": "D:/code/miaochongyang/simulator_battle/src/systems/wave_system.cpp",
+  "output": "D:/code/miaochongyang/simulator_battle/cmake-build-debug/CMakeFiles/simulator_battle.dir/src/systems/wave_system.cpp.obj"
+},
+{
+  "directory": "D:/code/miaochongyang/simulator_battle/cmake-build-debug",
+  "command": "C:\\Users\\topjoy\\AppData\\Local\\Programs\\CLion\\bin\\mingw\\bin\\g++.exe -ID:/code/miaochongyang/simulator_battle/src -g -std=c++20 -fdiagnostics-color=always -o CMakeFiles\\simulator_battle.dir\\src\\systems\\movement_system.cpp.obj -c D:\\code\\miaochongyang\\simulator_battle\\src\\systems\\movement_system.cpp",
+  "file": "D:/code/miaochongyang/simulator_battle/src/systems/movement_system.cpp",
+  "output": "D:/code/miaochongyang/simulator_battle/cmake-build-debug/CMakeFiles/simulator_battle.dir/src/systems/movement_system.cpp.obj"
+},
+{
+  "directory": "D:/code/miaochongyang/simulator_battle/cmake-build-debug",
+  "command": "C:\\Users\\topjoy\\AppData\\Local\\Programs\\CLion\\bin\\mingw\\bin\\g++.exe -ID:/code/miaochongyang/simulator_battle/src -g -std=c++20 -fdiagnostics-color=always -o CMakeFiles\\simulator_battle.dir\\src\\systems\\projectile_weapon_system.cpp.obj -c D:\\code\\miaochongyang\\simulator_battle\\src\\systems\\projectile_weapon_system.cpp",
+  "file": "D:/code/miaochongyang/simulator_battle/src/systems/projectile_weapon_system.cpp",
+  "output": "D:/code/miaochongyang/simulator_battle/cmake-build-debug/CMakeFiles/simulator_battle.dir/src/systems/projectile_weapon_system.cpp.obj"
+},
+{
+  "directory": "D:/code/miaochongyang/simulator_battle/cmake-build-debug",
+  "command": "C:\\Users\\topjoy\\AppData\\Local\\Programs\\CLion\\bin\\mingw\\bin\\g++.exe -ID:/code/miaochongyang/simulator_battle/src -g -std=c++20 -fdiagnostics-color=always -o CMakeFiles\\simulator_battle.dir\\src\\systems\\game_director.cpp.obj -c D:\\code\\miaochongyang\\simulator_battle\\src\\systems\\game_director.cpp",
+  "file": "D:/code/miaochongyang/simulator_battle/src/systems/game_director.cpp",
+  "output": "D:/code/miaochongyang/simulator_battle/cmake-build-debug/CMakeFiles/simulator_battle.dir/src/systems/game_director.cpp.obj"
+},
+{
+  "directory": "D:/code/miaochongyang/simulator_battle/cmake-build-debug",
+  "command": "C:\\Users\\topjoy\\AppData\\Local\\Programs\\CLion\\bin\\mingw\\bin\\g++.exe -ID:/code/miaochongyang/simulator_battle/src -g -std=c++20 -fdiagnostics-color=always -o CMakeFiles\\simulator_battle.dir\\src\\io\\metrics_logger.cpp.obj -c D:\\code\\miaochongyang\\simulator_battle\\src\\io\\metrics_logger.cpp",
+  "file": "D:/code/miaochongyang/simulator_battle/src/io/metrics_logger.cpp",
+  "output": "D:/code/miaochongyang/simulator_battle/cmake-build-debug/CMakeFiles/simulator_battle.dir/src/io/metrics_logger.cpp.obj"
+},
+{
+  "directory": "D:/code/miaochongyang/simulator_battle/cmake-build-debug",
+  "command": "C:\\Users\\topjoy\\AppData\\Local\\Programs\\CLion\\bin\\mingw\\bin\\g++.exe -ID:/code/miaochongyang/simulator_battle/src -g -std=c++20 -fdiagnostics-color=always -o CMakeFiles\\simulator_battle.dir\\src\\io\\json_value.cpp.obj -c D:\\code\\miaochongyang\\simulator_battle\\src\\io\\json_value.cpp",
+  "file": "D:/code/miaochongyang/simulator_battle/src/io/json_value.cpp",
+  "output": "D:/code/miaochongyang/simulator_battle/cmake-build-debug/CMakeFiles/simulator_battle.dir/src/io/json_value.cpp.obj"
+},
+{
+  "directory": "D:/code/miaochongyang/simulator_battle/cmake-build-debug",
+  "command": "C:\\Users\\topjoy\\AppData\\Local\\Programs\\CLion\\bin\\mingw\\bin\\g++.exe -ID:/code/miaochongyang/simulator_battle/src -g -std=c++20 -fdiagnostics-color=always -o CMakeFiles\\simulator_battle.dir\\src\\io\\config_loader.cpp.obj -c D:\\code\\miaochongyang\\simulator_battle\\src\\io\\config_loader.cpp",
+  "file": "D:/code/miaochongyang/simulator_battle/src/io/config_loader.cpp",
+  "output": "D:/code/miaochongyang/simulator_battle/cmake-build-debug/CMakeFiles/simulator_battle.dir/src/io/config_loader.cpp.obj"
+}
+]
