@@ -19,5 +19,8 @@
   },
   "difficulty_csv": {
     "file": "config/level_difficulty.csv"
+  },
+  "weapon_projectile": {
+    "file": "config/weapon_projectile_standard.json"
   }
 }

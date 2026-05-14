@@ -1,0 +1,224 @@
+{
+  // Schema 版本号：用于配置升级与兼容判断。
+  "schema_version": "v1",
+
+  // 武器唯一标识：建议全局唯一，作为日志、存档和回放索引键。
+  "weapon_id": "arcane_bolt",
+
+  // 武器显示名称（可本地化）。
+  "weapon_name": "Arcane Bolt",
+
+  // 武器类型：本模板固定为远程弹道武器。
+  "weapon_type": "projectile_ranged",
+
+  // 标签：用于掉落池筛选、成就系统、平衡分析分组等。
+  "tags": ["projectile", "ranged", "magic", "single_hit"],
+
+  // 数值单位约定：保证策划表、模拟器和回放工具一致。
+  "runtime_units": {
+    "distance": "world_unit", // 距离单位
+    "time": "second",         // 时间单位
+    "angle": "radian"         // 角度单位（弧度）
+  },
+
+  // 基础发射参数。
+  "base": {
+    "cooldown": 0.8,            // 冷却时间（秒），要求 > 0
+    "charges": 1,               // 最大充能数（>=1）
+    "burst_count": 1,           // 每次触发连发数量（>=1）
+    "burst_interval": 0.0,      // 连发间隔（秒），0 表示瞬发完
+    "projectiles_per_shot": 1   // 单次发射生成的弹体数量（>=1）
+  },
+
+  // 弹体运动与生命周期参数。
+  "projectile": {
+    "speed": 18.0,                        // 弹速（world_unit/s），>= 0
+    "max_lifetime": 2.0,                  // 最长存在时间（秒）
+    "max_travel_distance": 30.0,          // 最大飞行距离（world_unit）
+    "spawn_offset": 0.7,                  // 出生偏移（沿发射方向），防止贴身自碰撞
+    "inherit_owner_velocity_ratio": 0.0,  // 继承施法者速度比例（0~1 常见）
+    "initial_spread_angle": 0.0,          // 初始散射角（弧度）
+    "spread_pattern": "symmetric",        // 散射模式：对称/随机等（由引擎约定）
+    "pierce_count": 0,                    // 穿透次数（命中后继续飞行次数）
+    "ricochet_count": 0,                  // 弹射次数
+    "can_hit_same_target_again": false,   // 是否允许重复命中同一目标
+    "re_hit_cooldown": 0.0                // 重复命中同目标的最小间隔（秒）
+  },
+
+  // 碰撞参数（仅逻辑，不含视觉体积）。
+  "collision": {
+    "shape": "circle",          // 命中体形状：circle / aabb / sector（建议统一枚举）
+    "radius": 0.35,             // 圆形命中半径（world_unit）
+    "friendly_fire": false,     // 是否误伤友军
+    "collision_mask": ["enemy"],// 命中层过滤
+    "destroy_on_block": true    // 命中阻挡体后是否销毁
+  },
+
+  // 伤害与命中节奏参数。
+  "damage": {
+    "base_damage": 20.0,            // 基础伤害（>=0）
+    "damage_type": "magic",         // 伤害类型（物理/魔法/真实等）
+    "crit_chance": 0.05,            // 暴击率（[0,1)）
+    "crit_multiplier": 1.5,         // 暴击倍率（>1 常见）
+    "hit_interval_per_target": 0.0, // 对同目标的命中间隔（秒），0 表示单次命中
+    "max_targets_per_tick": 1,      // 单 Tick 最多可命中目标数（>=1）
+    "knockback_distance": 0.4       // 击退位移（world_unit），沿径向外推
+  },
+
+  // 状态效果列表：可并存多个效果。
+  "status_effects": [
+    {
+      "id": "slow",                     // 效果 ID
+      "chance": 0.2,                    // 触发概率（[0,1]）
+      "duration": 1.5,                  // 持续时间（秒）
+      "slow_ratio": 0.2,                // 减速比例（[0,1]）
+      "stack_rule": "refresh_duration"  // 叠加规则：刷新时长/叠层/取高值等
+    }
+  ],
+
+  // 目标选择：决定弹体发射方向与目标优先级。
+  "targeting": {
+    "mode": "nearest_enemy",   // 选敌模式：最近/最低血量/随机等
+    "search_radius": 12.0,     // 索敌半径（world_unit）
+    "fallback_mode": "forward",// 未找到目标时的后备方向策略
+    "allow_dead_target": false // 是否允许锁定死亡目标（通常 false）
+  },
+
+  // 随机系统：为回放和跨平台一致性服务。
+  "rng": {
+    "use_deterministic_rng": true,   // 是否强制使用确定性 RNG
+    "stream_id": "weapon_arcane_bolt"// RNG 流 ID（建议与 weapon_id 对应）
+  },
+
+  // 强化通道：所有可被词条修改的参数都在这里声明。
+  "upgrade_channels": {
+    "cooldown": {
+      "base": 0.8,                  // 通道基准值
+      "min": 0.08,                  // 下限（防止攻速无限）
+      "stack_mode": "mul_then_clamp"// 叠加模式：先乘再钳制
+    },
+    "projectiles_per_shot": {
+      "base": 1,
+      "min": 1,
+      "max": 24,
+      "stack_mode": "add_then_clamp"// 叠加模式：先加再钳制
+    },
+    "base_damage": {
+      "base": 20.0,
+      "min": 0.0,
+      "stack_mode": "add_and_mul"   // 叠加模式：先加后乘（推荐明确顺序）
+    },
+    "crit_chance": {
+      "base": 0.05,
+      "min": 0.0,
+      "max": 0.95,
+      "stack_mode": "add_then_clamp"
+    },
+    "pierce_count": {
+      "base": 0,
+      "min": 0,
+      "max": 20,
+      "stack_mode": "add_then_clamp"
+    },
+    "knockback_distance": {
+      "base": 0.4,
+      "min": 0.0,
+      "max": 10.0,
+      "stack_mode": "add_then_clamp"
+    },
+    "slow_ratio": {
+      "base": 0.2,
+      "min": 0.0,
+      "max": 0.9,
+      "stack_mode": "add_then_clamp"
+    }
+  },
+
+  // 肉鸽可抽取强化项池。
+  "upgrade_options": [
+    {
+      "option_id": "u_bolt_damage_1", // 强化项 ID（唯一）
+      "rarity": "common",             // 稀有度：common/rare/epic/legendary
+      "weight": 100,                  // 抽取权重（>0）
+      "max_pick": 10,                 // 最大可选次数
+      "modifiers": [
+        {
+          "channel": "base_damage",   // 作用通道
+          "op": "add",                // 操作：add 或 mul
+          "value": 4.0                // 操作数值
+        }
+      ]
+    },
+    {
+      "option_id": "u_bolt_rate_1",
+      "rarity": "common",
+      "weight": 80,
+      "max_pick": 8,
+      "modifiers": [
+        {
+          "channel": "cooldown",
+          "op": "mul",
+          "value": 0.92
+        }
+      ]
+    },
+    {
+      "option_id": "u_bolt_pierce_1",
+      "rarity": "rare",
+      "weight": 35,
+      "max_pick": 4,
+      "modifiers": [
+        {
+          "channel": "pierce_count",
+          "op": "add",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "option_id": "u_bolt_multishot_1",
+      "rarity": "epic",
+      "weight": 15,
+      "max_pick": 3,
+      "modifiers": [
+        {
+          "channel": "projectiles_per_shot",
+          "op": "add",
+          "value": 1
+        },
+        {
+          "channel": "cooldown",
+          "op": "mul",
+          "value": 1.08
+        }
+      ]
+    }
+  ],
+
+  // 武器进化配置：满足条件后可切换为进化武器。
+  "evolution": {
+    "can_evolve": true, // 是否允许进化
+    "requirements": [
+      {
+        "type": "has_option",             // 条件类型：拥有某强化项
+        "option_id": "u_bolt_multishot_1",
+        "count": 2
+      },
+      {
+        "type": "player_level_at_least",  // 条件类型：玩家等级至少
+        "value": 20
+      }
+    ],
+    "result_weapon_id": "arcane_bolt_ex"  // 进化后武器 ID
+  },
+
+  // 网络快照字段：用于回滚、重放和断线重连。
+  "network_snapshot": {
+    "state_fields": [
+      "cooldown_remaining", // 剩余冷却
+      "charge_count",       // 当前充能
+      "next_fire_time",     // 下一次可发射时间点
+      "rng_state"           // RNG 状态
+    ]
+  }
+}

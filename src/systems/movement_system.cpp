@@ -32,7 +32,7 @@ void MovementSystem::Tick(
         pool.AddAttackCooldown(id, dt);
         const float attack_range = std::max(pool.AttackRange(id), player_contact_radius_);
         if (len2 <= attack_range * attack_range && pool.AttackCooldown(id) <= 0.0f) {
-            const float damage = pool.AttackDamage(id);
+            const float damage = pool.AttackDamage(id) * player.final_damage_taken_multiplier;
             player.hp -= damage;
             metrics.AddDamageTaken(damage);
             pool.SetAttackCooldown(id, pool.AttackIntervalSec(id));

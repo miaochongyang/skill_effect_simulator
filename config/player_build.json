@@ -1,19 +1,19 @@
 {
-  "player_hp": 1500.0,
+  "player_hp": 900.0,
   "max_survival_time_sec": 1800.0,
   "skills": [
     {
       "id": "garlic",
       "cooldown": 0.45,
       "radius": 4.2,
-      "damage": 9.0,
+      "damage": 16.0,
       "max_targets": 1000000
     },
     {
       "id": "sword_ring",
       "cooldown": 1.05,
       "radius": 8.4,
-      "damage": 24.0,
+      "damage": 42.0,
       "max_targets": 80
     }
   ]

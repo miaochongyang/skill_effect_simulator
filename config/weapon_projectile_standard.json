@@ -1,0 +1,191 @@
+{
+  "schema_version": "v1",
+  "weapon_id": "arcane_bolt",
+  "weapon_name": "Arcane Bolt",
+  "weapon_type": "projectile_ranged",
+  "tags": ["projectile", "ranged", "magic", "single_hit"],
+  "runtime_units": {
+    "distance": "world_unit",
+    "time": "second",
+    "angle": "radian"
+  },
+  "base": {
+    "cooldown": 0.8,
+    "charges": 1,
+    "burst_count": 1,
+    "burst_interval": 0.0,
+    "projectiles_per_shot": 1
+  },
+  "projectile": {
+    "speed": 18.0,
+    "max_lifetime": 2.0,
+    "max_travel_distance": 30.0,
+    "spawn_offset": 0.7,
+    "inherit_owner_velocity_ratio": 0.0,
+    "initial_spread_angle": 0.0,
+    "spread_pattern": "symmetric",
+    "pierce_count": 0,
+    "ricochet_count": 0,
+    "can_hit_same_target_again": false,
+    "re_hit_cooldown": 0.0
+  },
+  "collision": {
+    "shape": "circle",
+    "radius": 0.35,
+    "friendly_fire": false,
+    "collision_mask": ["enemy"],
+    "destroy_on_block": true
+  },
+  "damage": {
+    "base_damage": 20.0,
+    "damage_type": "magic",
+    "crit_chance": 0.05,
+    "crit_multiplier": 1.5,
+    "hit_interval_per_target": 0.0,
+    "max_targets_per_tick": 1,
+    "knockback_distance": 0.4
+  },
+  "status_effects": [
+    {
+      "id": "slow",
+      "chance": 0.2,
+      "duration": 1.5,
+      "slow_ratio": 0.2,
+      "stack_rule": "refresh_duration"
+    }
+  ],
+  "targeting": {
+    "mode": "nearest_enemy",
+    "search_radius": 12.0,
+    "fallback_mode": "forward",
+    "allow_dead_target": false
+  },
+  "rng": {
+    "use_deterministic_rng": true,
+    "stream_id": "weapon_arcane_bolt"
+  },
+  "upgrade_channels": {
+    "cooldown": {
+      "base": 0.8,
+      "min": 0.08,
+      "stack_mode": "mul_then_clamp"
+    },
+    "projectiles_per_shot": {
+      "base": 1,
+      "min": 1,
+      "max": 24,
+      "stack_mode": "add_then_clamp"
+    },
+    "base_damage": {
+      "base": 20.0,
+      "min": 0.0,
+      "stack_mode": "add_and_mul"
+    },
+    "crit_chance": {
+      "base": 0.05,
+      "min": 0.0,
+      "max": 0.95,
+      "stack_mode": "add_then_clamp"
+    },
+    "pierce_count": {
+      "base": 0,
+      "min": 0,
+      "max": 20,
+      "stack_mode": "add_then_clamp"
+    },
+    "knockback_distance": {
+      "base": 0.4,
+      "min": 0.0,
+      "max": 10.0,
+      "stack_mode": "add_then_clamp"
+    },
+    "slow_ratio": {
+      "base": 0.2,
+      "min": 0.0,
+      "max": 0.9,
+      "stack_mode": "add_then_clamp"
+    }
+  },
+  "upgrade_options": [
+    {
+      "option_id": "u_bolt_damage_1",
+      "rarity": "common",
+      "weight": 100,
+      "max_pick": 10,
+      "modifiers": [
+        {
+          "channel": "base_damage",
+          "op": "add",
+          "value": 4.0
+        }
+      ]
+    },
+    {
+      "option_id": "u_bolt_rate_1",
+      "rarity": "common",
+      "weight": 80,
+      "max_pick": 8,
+      "modifiers": [
+        {
+          "channel": "cooldown",
+          "op": "mul",
+          "value": 0.92
+        }
+      ]
+    },
+    {
+      "option_id": "u_bolt_pierce_1",
+      "rarity": "rare",
+      "weight": 35,
+      "max_pick": 4,
+      "modifiers": [
+        {
+          "channel": "pierce_count",
+          "op": "add",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "option_id": "u_bolt_multishot_1",
+      "rarity": "epic",
+      "weight": 15,
+      "max_pick": 3,
+      "modifiers": [
+        {
+          "channel": "projectiles_per_shot",
+          "op": "add",
+          "value": 1
+        },
+        {
+          "channel": "cooldown",
+          "op": "mul",
+          "value": 1.08
+        }
+      ]
+    }
+  ],
+  "evolution": {
+    "can_evolve": true,
+    "requirements": [
+      {
+        "type": "has_option",
+        "option_id": "u_bolt_multishot_1",
+        "count": 2
+      },
+      {
+        "type": "player_level_at_least",
+        "value": 20
+      }
+    ],
+    "result_weapon_id": "arcane_bolt_ex"
+  },
+  "network_snapshot": {
+    "state_fields": [
+      "cooldown_remaining",
+      "charge_count",
+      "next_fire_time",
+      "rng_state"
+    ]
+  }
+}

@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "core/sim_types.hpp"
+
 namespace sim::io {
 
 class MetricsLogger {
@@ -13,6 +15,19 @@ public:
         float time_sec = 0.0f;
         std::uint32_t alive = 0;
         std::uint64_t kills = 0;
+        float player_hp = 0.0f;
+        float player_max_hp = 0.0f;
+        float attack_power = 0.0f;
+        float attack_speed = 0.0f;
+        float cooldown_reduction = 0.0f;
+        float crit_chance = 0.0f;
+        float crit_multiplier = 0.0f;
+        float damage_multiplier = 0.0f;
+        int projectile_count_bonus = 0;
+        float aoe_radius_multiplier = 0.0f;
+        float final_damage_taken_multiplier = 0.0f;
+        float regen_hp_per_sec = 0.0f;
+        float life_steal = 0.0f;
     };
     struct WaveSummary {
         std::uint32_t wave_index = 0;
@@ -33,7 +48,8 @@ public:
     void AddDamageTaken(float d) noexcept { damage_taken_ += static_cast<double>(d); }
     void AddSkillDamage(std::uint8_t skill_id, float d) noexcept;
     void UpdatePeakAlive(std::size_t alive) noexcept;
-    void AddTimeline(float time_sec, std::uint32_t alive, std::uint64_t kills);
+    void AddTimeline(float time_sec, std::uint32_t alive, std::uint64_t kills, const sim::core::Player& player);
+    void SetFinalPlayerState(const sim::core::Player& player) noexcept;
     void AddWaveSummary(
         std::uint32_t wave_index,
         float trigger_time_sec,
@@ -65,6 +81,7 @@ private:
     std::array<double, 64> skill_total_damage_{}; // 预留 64 个技能槽位。
     std::vector<TimelineSample> timeline_;
     std::vector<WaveSummary> wave_summaries_;
+    sim::core::Player final_player_state_{};
 };
 
 } // namespace sim::io

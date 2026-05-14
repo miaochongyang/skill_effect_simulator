@@ -9,6 +9,7 @@ namespace sim::io {
 class ConfigLoader {
 public:
     static sim::core::PlayerBuildConfig LoadPlayerBuild(const std::string& path);
+    static sim::core::PlayerProfileConfig LoadPlayerProfileTemplate(const std::string& path);
     static sim::core::LevelDesignConfig LoadLevelDesign(const std::string& path);
     static std::vector<sim::core::SpawnEvent> LoadSpawnEventsCsv(
         const std::string& path,
@@ -24,6 +25,7 @@ public:
         const std::string& scenario_id,
         const std::string& variant_id
     );
+    static sim::core::ProjectileWeaponDef LoadProjectileWeaponJson(const std::string& path);
 
 private:
     static std::string ReadFileToString(const std::string& path);

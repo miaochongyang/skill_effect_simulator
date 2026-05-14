@@ -44,15 +44,18 @@ int main() {
 
     try {
         // 配置文件是无头模拟器的“输入域”：
-        // - player_build.json 控制角色构筑（技能、血量、生存上限）
+        // - player_profile_template.json 控制角色属性、成长与战斗乘区
         // - level_design.json 控制关卡时间轴、怪物参数和网格参数
-        const std::string player_build_path = ResolveConfigPath("player_build.json");
+        const std::string player_profile_path = ResolveConfigPath("player_profile_template.json");
         const std::string level_design_path = ResolveConfigPath("level_design.json");
-        const sim::core::PlayerBuildConfig player_cfg = sim::io::ConfigLoader::LoadPlayerBuild(player_build_path);
-        const sim::core::LevelDesignConfig level_cfg = sim::io::ConfigLoader::LoadLevelDesign(level_design_path);
+        const sim::core::PlayerProfileConfig profile_cfg = sim::io::ConfigLoader::LoadPlayerProfileTemplate(player_profile_path);
+        sim::core::LevelDesignConfig level_cfg = sim::io::ConfigLoader::LoadLevelDesign(level_design_path);
+        if (!profile_cfg.main_weapon_file.empty()) {
+            level_cfg.projectile_weapon_def = sim::io::ConfigLoader::LoadProjectileWeaponJson(profile_cfg.main_weapon_file);
+        }
 
         sim::systems::GameDirector director(/*player_contact_radius=*/0.9f);
-        director.Init(player_cfg, level_cfg);
+        director.Init(profile_cfg, level_cfg);
 
         const auto start = clock::now();
         director.Run();

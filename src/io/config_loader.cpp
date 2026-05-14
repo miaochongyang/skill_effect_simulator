@@ -9,6 +9,7 @@
 #include <optional>
 #include <sstream>
 #include <stdexcept>
+#include <string_view>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -17,6 +18,26 @@
 
 namespace sim::io {
 namespace {
+
+std::string SanitizeCsvCell(std::string cell) {
+    if (!cell.empty() && static_cast<unsigned char>(cell[0]) == 0xEF &&
+        cell.size() >= 3 &&
+        static_cast<unsigned char>(cell[1]) == 0xBB &&
+        static_cast<unsigned char>(cell[2]) == 0xBF) {
+        cell.erase(0, 3); // UTF-8 BOM
+    }
+    while (!cell.empty() && (cell.back() == '\r' || cell.back() == '\n' || cell.back() == ' ' || cell.back() == '\t')) {
+        cell.pop_back();
+    }
+    std::size_t begin = 0;
+    while (begin < cell.size() && (cell[begin] == ' ' || cell[begin] == '\t')) {
+        ++begin;
+    }
+    if (begin > 0) {
+        cell.erase(0, begin);
+    }
+    return cell;
+}
 
 double GetNumber(const JsonValue::Object& obj, const char* key, const double default_value, const bool required) {
     const auto it = obj.find(key);
@@ -58,9 +79,32 @@ std::string GetString(
 } // namespace
 
 std::string ConfigLoader::ReadFileToString(const std::string& path) {
-    std::ifstream in(path, std::ios::in | std::ios::binary);
+    auto ResolveDataPath = [](const std::string& rel_or_abs_path) -> std::string {
+        namespace fs = std::filesystem;
+        const fs::path raw(rel_or_abs_path);
+        if (raw.is_absolute()) {
+            return raw.string();
+        }
+        const fs::path cwd = fs::current_path();
+        const std::vector<fs::path> candidates = {
+            cwd / rel_or_abs_path,
+            cwd / ".." / rel_or_abs_path,
+            cwd / ".." / ".." / rel_or_abs_path,
+            cwd / ".." / ".." / ".." / rel_or_abs_path
+        };
+        for (const auto& p : candidates) {
+            std::error_code ec;
+            if (fs::exists(p, ec) && !ec) {
+                return p.lexically_normal().string();
+            }
+        }
+        return rel_or_abs_path;
+    };
+
+    const std::string resolved_path = ResolveDataPath(path);
+    std::ifstream in(resolved_path, std::ios::in | std::ios::binary);
     if (!in) {
-        throw std::runtime_error("Cannot open file: " + path);
+        throw std::runtime_error("Cannot open file: " + resolved_path);
     }
     std::ostringstream ss;
     ss << in.rdbuf();
@@ -120,7 +164,10 @@ std::vector<sim::core::SpawnEvent> ConfigLoader::LoadSpawnEventsCsv(
             }
             token.push_back(c);
         }
-        cols.push_back(token);
+        cols.push_back(SanitizeCsvCell(token));
+        for (std::string& c : cols) {
+            c = SanitizeCsvCell(std::move(c));
+        }
         return cols;
     };
 
@@ -217,6 +264,18 @@ std::vector<sim::core::SpawnEvent> ConfigLoader::LoadSpawnEventsCsv(
         }
         if (e.trigger_tick < 0) {
             throw std::runtime_error("trigger_tick must be >= 0, event_id=" + std::to_string(e.event_id));
+        }
+        // 额外一致性校验：若 trigger_time_sec 与 fixed_dt 推导出的 tick 明显不一致，
+        // 说明 CSV 可能基于另一套 fixed_dt 生成，会导致整条时间轴提前/延后。
+        const int expected_tick_from_time = static_cast<int>(std::lround(static_cast<double>(e.trigger_time_sec) / fixed_dt));
+        if (std::abs(expected_tick_from_time - e.trigger_tick) > 1) {
+            throw std::runtime_error(
+                "trigger_tick mismatch with trigger_time_sec, event_id=" + std::to_string(e.event_id) +
+                ", trigger_time_sec=" + std::to_string(e.trigger_time_sec) +
+                ", trigger_tick=" + std::to_string(e.trigger_tick) +
+                ", expected_tick=" + std::to_string(expected_tick_from_time) +
+                " under fixed_dt=" + std::to_string(fixed_dt)
+            );
         }
         const int max_tick = static_cast<int>(std::llround(static_cast<double>(e.level_duration_sec) / fixed_dt));
         if (e.trigger_tick > max_tick) {
@@ -325,7 +384,10 @@ std::vector<sim::core::MonsterDef> ConfigLoader::LoadMonsterDefCsv(const std::st
             }
             token.push_back(c);
         }
-        cols.push_back(token);
+        cols.push_back(SanitizeCsvCell(token));
+        for (std::string& c : cols) {
+            c = SanitizeCsvCell(std::move(c));
+        }
         return cols;
     };
 
@@ -476,7 +538,10 @@ std::vector<sim::core::DifficultyRow> ConfigLoader::LoadLevelDifficultyCsv(
             }
             token.push_back(c);
         }
-        cols.push_back(token);
+        cols.push_back(SanitizeCsvCell(token));
+        for (std::string& c : cols) {
+            c = SanitizeCsvCell(std::move(c));
+        }
         return cols;
     };
 
@@ -621,6 +686,198 @@ std::vector<sim::core::DifficultyRow> ConfigLoader::LoadLevelDifficultyCsv(
     return out;
 }
 
+sim::core::ProjectileWeaponDef ConfigLoader::LoadProjectileWeaponJson(const std::string& path) {
+    const JsonValue root = JsonParser::ParseText(ReadFileToString(path));
+    if (!root.IsObject()) {
+        throw std::runtime_error("weapon_projectile_standard.json root must be object.");
+    }
+    const JsonValue::Object& obj = root.AsObject();
+
+    auto GetReqObj = [](const JsonValue::Object& o, const char* key) -> const JsonValue::Object& {
+        const auto it = o.find(key);
+        if (it == o.end() || !it->second.IsObject()) {
+            throw std::runtime_error(std::string("Missing required object field: ") + key);
+        }
+        return it->second.AsObject();
+    };
+
+    sim::core::ProjectileWeaponDef def{};
+    def.schema_version = GetString(obj, "schema_version", "", true);
+    def.weapon_id = GetString(obj, "weapon_id", "", true);
+    def.weapon_name = GetString(obj, "weapon_name", "", true);
+    def.weapon_type = GetString(obj, "weapon_type", "", true);
+
+    const auto& base = GetReqObj(obj, "base");
+    def.cooldown = static_cast<float>(GetNumber(base, "cooldown", 0.0, true));
+    def.charges = GetInt(base, "charges", 1, false);
+    def.burst_count = GetInt(base, "burst_count", 1, false);
+    def.burst_interval = static_cast<float>(GetNumber(base, "burst_interval", 0.0, false));
+    def.projectiles_per_shot = GetInt(base, "projectiles_per_shot", 1, false);
+
+    const auto& projectile = GetReqObj(obj, "projectile");
+    def.projectile_speed = static_cast<float>(GetNumber(projectile, "speed", 0.0, true));
+    def.max_lifetime = static_cast<float>(GetNumber(projectile, "max_lifetime", 0.0, false));
+    def.max_travel_distance = static_cast<float>(GetNumber(projectile, "max_travel_distance", 0.0, false));
+    def.spawn_offset = static_cast<float>(GetNumber(projectile, "spawn_offset", 0.0, false));
+    def.inherit_owner_velocity_ratio = static_cast<float>(
+        GetNumber(projectile, "inherit_owner_velocity_ratio", 0.0, false)
+    );
+    def.initial_spread_angle = static_cast<float>(GetNumber(projectile, "initial_spread_angle", 0.0, false));
+    def.spread_pattern = GetString(projectile, "spread_pattern", "symmetric", false);
+    def.pierce_count = GetInt(projectile, "pierce_count", 0, false);
+    def.ricochet_count = GetInt(projectile, "ricochet_count", 0, false);
+    if (const auto it = projectile.find("can_hit_same_target_again"); it != projectile.end() && it->second.IsBool()) {
+        def.can_hit_same_target_again = it->second.AsBool();
+    }
+    def.re_hit_cooldown = static_cast<float>(GetNumber(projectile, "re_hit_cooldown", 0.0, false));
+
+    const auto& collision = GetReqObj(obj, "collision");
+    def.collision_shape = GetString(collision, "shape", "circle", false);
+    def.collision_radius = static_cast<float>(GetNumber(collision, "radius", 0.0, false));
+    if (const auto it = collision.find("friendly_fire"); it != collision.end() && it->second.IsBool()) {
+        def.friendly_fire = it->second.AsBool();
+    }
+    if (const auto it = collision.find("destroy_on_block"); it != collision.end() && it->second.IsBool()) {
+        def.destroy_on_block = it->second.AsBool();
+    }
+
+    const auto& damage = GetReqObj(obj, "damage");
+    def.base_damage = static_cast<float>(GetNumber(damage, "base_damage", 0.0, true));
+    def.damage_type = GetString(damage, "damage_type", "physical", false);
+    def.crit_chance = static_cast<float>(GetNumber(damage, "crit_chance", 0.0, false));
+    def.crit_multiplier = static_cast<float>(GetNumber(damage, "crit_multiplier", 1.5, false));
+    def.hit_interval_per_target = static_cast<float>(GetNumber(damage, "hit_interval_per_target", 0.0, false));
+    def.max_targets_per_tick = GetInt(damage, "max_targets_per_tick", 1, false);
+    def.knockback_distance = static_cast<float>(GetNumber(damage, "knockback_distance", 0.0, false));
+
+    const auto& targeting = GetReqObj(obj, "targeting");
+    def.targeting_mode = GetString(targeting, "mode", "nearest_enemy", false);
+    def.targeting_search_radius = static_cast<float>(GetNumber(targeting, "search_radius", 0.0, false));
+    def.targeting_fallback_mode = GetString(targeting, "fallback_mode", "forward", false);
+    if (const auto it = targeting.find("allow_dead_target"); it != targeting.end() && it->second.IsBool()) {
+        def.allow_dead_target = it->second.AsBool();
+    }
+
+    if (const auto rng = root.TryGet("rng"); rng != nullptr && rng->IsObject()) {
+        const auto& r = rng->AsObject();
+        if (const auto it = r.find("use_deterministic_rng"); it != r.end() && it->second.IsBool()) {
+            def.use_deterministic_rng = it->second.AsBool();
+        }
+        def.rng_stream_id = GetString(r, "stream_id", def.rng_stream_id, false);
+    }
+
+    if (const auto se = root.TryGet("status_effects"); se != nullptr && se->IsArray()) {
+        for (const auto& item : se->AsArray()) {
+            if (!item.IsObject()) {
+                continue;
+            }
+            const auto& e = item.AsObject();
+            sim::core::ProjectileStatusEffectDef d{};
+            d.id = GetString(e, "id", "", true);
+            d.chance = static_cast<float>(GetNumber(e, "chance", 0.0, false));
+            d.duration = static_cast<float>(GetNumber(e, "duration", 0.0, false));
+            d.slow_ratio = static_cast<float>(GetNumber(e, "slow_ratio", 0.0, false));
+            d.stack_rule = GetString(e, "stack_rule", "", false);
+            def.status_effects.push_back(std::move(d));
+        }
+    }
+
+    if (const auto channels = root.TryGet("upgrade_channels"); channels != nullptr && channels->IsObject()) {
+        for (const auto& kv : channels->AsObject()) {
+            if (!kv.second.IsObject()) {
+                continue;
+            }
+            const auto& c = kv.second.AsObject();
+            sim::core::ProjectileUpgradeChannelDef d{};
+            d.base = GetNumber(c, "base", 0.0, true);
+            d.min = GetNumber(c, "min", 0.0, false);
+            if (const auto it_max = c.find("max"); it_max != c.end() && it_max->second.IsNumber()) {
+                d.max = it_max->second.AsNumber();
+                d.has_max = true;
+            }
+            d.stack_mode = GetString(c, "stack_mode", "", false);
+            def.upgrade_channels[kv.first] = std::move(d);
+        }
+    }
+
+    if (const auto options = root.TryGet("upgrade_options"); options != nullptr && options->IsArray()) {
+        for (const auto& item : options->AsArray()) {
+            if (!item.IsObject()) {
+                continue;
+            }
+            const auto& o = item.AsObject();
+            sim::core::ProjectileUpgradeOptionDef opt{};
+            opt.option_id = GetString(o, "option_id", "", true);
+            opt.rarity = GetString(o, "rarity", "", false);
+            opt.weight = GetInt(o, "weight", 1, false);
+            opt.max_pick = GetInt(o, "max_pick", 1, false);
+            if (const auto mods = item.TryGet("modifiers"); mods != nullptr && mods->IsArray()) {
+                for (const auto& m : mods->AsArray()) {
+                    if (!m.IsObject()) {
+                        continue;
+                    }
+                    const auto& mo = m.AsObject();
+                    sim::core::ProjectileUpgradeModifierDef mod{};
+                    mod.channel = GetString(mo, "channel", "", true);
+                    mod.op = GetString(mo, "op", "", true);
+                    mod.value = GetNumber(mo, "value", 0.0, true);
+                    opt.modifiers.push_back(std::move(mod));
+                }
+            }
+            def.upgrade_options.push_back(std::move(opt));
+        }
+    }
+
+    // ===== 文档校验 =====
+    if (def.schema_version != "v1") {
+        throw std::runtime_error("Unsupported projectile weapon schema_version: " + def.schema_version);
+    }
+    if (def.weapon_type != "projectile_ranged") {
+        throw std::runtime_error("weapon_type must be projectile_ranged.");
+    }
+    if (def.cooldown <= 0.0f) {
+        throw std::runtime_error("base.cooldown must be > 0.");
+    }
+    if (def.projectile_speed < 0.0f) {
+        throw std::runtime_error("projectile.speed must be >= 0.");
+    }
+    if (!(def.max_lifetime > 0.0f || def.max_travel_distance > 0.0f)) {
+        throw std::runtime_error("projectile must have max_lifetime>0 or max_travel_distance>0.");
+    }
+    if (def.collision_radius < 0.0f) {
+        throw std::runtime_error("collision.radius must be >= 0.");
+    }
+    if (def.crit_chance < 0.0f || def.crit_chance >= 1.0f) {
+        throw std::runtime_error("damage.crit_chance must be in [0,1).");
+    }
+    for (const auto& s : def.status_effects) {
+        if (s.slow_ratio < 0.0f || s.slow_ratio > 1.0f) {
+            throw std::runtime_error("status_effects.slow_ratio must be in [0,1]. id=" + s.id);
+        }
+    }
+    for (const auto& o : def.upgrade_options) {
+        if (o.weight <= 0) {
+            throw std::runtime_error("upgrade_options.weight must be > 0. option_id=" + o.option_id);
+        }
+        if (o.max_pick < 1) {
+            throw std::runtime_error("upgrade_options.max_pick must be >=1. option_id=" + o.option_id);
+        }
+        for (const auto& m : o.modifiers) {
+            if (def.upgrade_channels.find(m.channel) == def.upgrade_channels.end()) {
+                throw std::runtime_error(
+                    "upgrade modifier channel not found in upgrade_channels. option_id=" + o.option_id +
+                    ", channel=" + m.channel
+                );
+            }
+            if (m.op != "add" && m.op != "mul") {
+                throw std::runtime_error("upgrade modifier op must be add/mul. option_id=" + o.option_id);
+            }
+        }
+    }
+
+    return def;
+}
+
 sim::core::PlayerBuildConfig ConfigLoader::LoadPlayerBuild(const std::string& path) {
     const JsonValue root = JsonParser::ParseText(ReadFileToString(path));
     if (!root.IsObject()) {
@@ -699,6 +956,148 @@ sim::core::PlayerBuildConfig ConfigLoader::LoadPlayerBuild(const std::string& pa
         if (!id_set.insert(s.skill_id).second) {
             throw std::runtime_error("Duplicate skill_id found in player_build.json.");
         }
+    }
+
+    return cfg;
+}
+
+sim::core::PlayerProfileConfig ConfigLoader::LoadPlayerProfileTemplate(const std::string& path) {
+    const JsonValue root = JsonParser::ParseText(ReadFileToString(path));
+    if (!root.IsObject()) {
+        throw std::runtime_error("player_profile_template.json root must be object.");
+    }
+    const JsonValue::Object& obj = root.AsObject();
+
+    auto GetObj = [](const JsonValue::Object& src, const char* key) -> const JsonValue::Object& {
+        const auto it = src.find(key);
+        if (it == src.end() || !it->second.IsObject()) {
+            throw std::runtime_error(std::string("Missing required object field: ") + key);
+        }
+        return it->second.AsObject();
+    };
+
+    sim::core::PlayerProfileConfig cfg{};
+    cfg.schema_version = GetString(obj, "schema_version", "", true);
+    cfg.profile_id = GetString(obj, "profile_id", "", true);
+    cfg.display_name = GetString(obj, "display_name", "", true);
+
+    const auto& simulation = GetObj(obj, "simulation");
+    cfg.player_hp = static_cast<float>(GetNumber(simulation, "player_hp", cfg.player_hp, true));
+    cfg.max_survival_time_sec = static_cast<float>(
+        GetNumber(simulation, "max_survival_time_sec", cfg.max_survival_time_sec, true)
+    );
+
+    const auto& base_stats = GetObj(obj, "base_stats");
+    cfg.max_hp = static_cast<float>(GetNumber(base_stats, "max_hp", cfg.max_hp, true));
+    cfg.base_attack_power = static_cast<float>(GetNumber(base_stats, "base_attack_power", cfg.base_attack_power, true));
+    cfg.base_attack_speed = static_cast<float>(GetNumber(base_stats, "base_attack_speed", cfg.base_attack_speed, true));
+    cfg.base_cooldown_reduction = static_cast<float>(
+        GetNumber(base_stats, "base_cooldown_reduction", cfg.base_cooldown_reduction, true)
+    );
+    cfg.base_crit_chance = static_cast<float>(GetNumber(base_stats, "base_crit_chance", cfg.base_crit_chance, true));
+    cfg.base_crit_multiplier = static_cast<float>(
+        GetNumber(base_stats, "base_crit_multiplier", cfg.base_crit_multiplier, true)
+    );
+    cfg.base_luck = static_cast<float>(GetNumber(base_stats, "base_luck", cfg.base_luck, false));
+
+    const auto& combat = GetObj(obj, "combat");
+    cfg.damage_multiplier = static_cast<float>(GetNumber(combat, "damage_multiplier", cfg.damage_multiplier, true));
+    cfg.projectile_count_bonus = GetInt(combat, "projectile_count_bonus", cfg.projectile_count_bonus, false);
+    cfg.aoe_radius_multiplier = static_cast<float>(
+        GetNumber(combat, "aoe_radius_multiplier", cfg.aoe_radius_multiplier, true)
+    );
+    cfg.status_power_multiplier = static_cast<float>(
+        GetNumber(combat, "status_power_multiplier", cfg.status_power_multiplier, false)
+    );
+    cfg.final_damage_taken_multiplier = static_cast<float>(
+        GetNumber(combat, "final_damage_taken_multiplier", cfg.final_damage_taken_multiplier, true)
+    );
+
+    const auto& defense = GetObj(obj, "defense");
+    cfg.armor = static_cast<float>(GetNumber(defense, "armor", cfg.armor, false));
+    cfg.evasion = static_cast<float>(GetNumber(defense, "evasion", cfg.evasion, false));
+    cfg.block_chance = static_cast<float>(GetNumber(defense, "block_chance", cfg.block_chance, false));
+    cfg.block_flat_reduction = static_cast<float>(
+        GetNumber(defense, "block_flat_reduction", cfg.block_flat_reduction, false)
+    );
+    cfg.regen_hp_per_sec = static_cast<float>(GetNumber(defense, "regen_hp_per_sec", cfg.regen_hp_per_sec, false));
+    cfg.life_steal = static_cast<float>(GetNumber(defense, "life_steal", cfg.life_steal, false));
+
+    if (const JsonValue* progression = root.TryGet("progression");
+        progression != nullptr && progression->IsObject()) {
+        if (const JsonValue* stat_growth = progression->TryGet("stat_growth");
+            stat_growth != nullptr && stat_growth->IsObject()) {
+            if (const JsonValue* time_growth = stat_growth->TryGet("time_growth");
+                time_growth != nullptr && time_growth->IsObject()) {
+                cfg.time_growth_k_hp = static_cast<float>(
+                    GetNumber(time_growth->AsObject(), "k_hp", cfg.time_growth_k_hp, false)
+                );
+                cfg.time_growth_k_atk = static_cast<float>(
+                    GetNumber(time_growth->AsObject(), "k_atk", cfg.time_growth_k_atk, false)
+                );
+            }
+        }
+    }
+
+    if (const JsonValue* rules = root.TryGet("rules"); rules != nullptr && rules->IsObject()) {
+        cfg.target_priority = GetString(rules->AsObject(), "target_priority", cfg.target_priority, false);
+        cfg.collision_policy = GetString(rules->AsObject(), "collision_policy", cfg.collision_policy, false);
+        cfg.rng_stream_id = GetString(rules->AsObject(), "rng_stream_id", cfg.rng_stream_id, false);
+    }
+
+    if (const JsonValue* loadout = root.TryGet("loadout"); loadout != nullptr && loadout->IsObject()) {
+        if (const JsonValue* bindings = loadout->TryGet("weapon_bindings");
+            bindings != nullptr && bindings->IsArray()) {
+            for (const JsonValue& item : bindings->AsArray()) {
+                if (!item.IsObject()) {
+                    continue;
+                }
+                const JsonValue::Object& b = item.AsObject();
+                const std::string slot = GetString(b, "slot", "", false);
+                const std::string weapon_file = GetString(b, "weapon_file", "", false);
+                bool enabled = true;
+                if (const auto it = b.find("enabled"); it != b.end() && it->second.IsBool()) {
+                    enabled = it->second.AsBool();
+                }
+                if (enabled && slot == "main_ranged" && !weapon_file.empty()) {
+                    cfg.main_weapon_file = weapon_file;
+                    break;
+                }
+            }
+        }
+    }
+
+    // ===== 文档范围校验（当前接入字段）=====
+    if (cfg.schema_version != "v1") {
+        throw std::runtime_error("Unsupported player profile schema_version: " + cfg.schema_version);
+    }
+    if (cfg.profile_id.empty() || cfg.display_name.empty()) {
+        throw std::runtime_error("profile_id/display_name cannot be empty.");
+    }
+    if (cfg.player_hp <= 0.0f || cfg.max_survival_time_sec <= 0.0f) {
+        throw std::runtime_error("simulation.player_hp/max_survival_time_sec must be > 0.");
+    }
+    if (cfg.max_hp < 1.0f || cfg.base_attack_power < 0.0f || cfg.base_attack_speed <= 0.0f) {
+        throw std::runtime_error("base_stats has invalid range.");
+    }
+    if (cfg.base_cooldown_reduction < 0.0f || cfg.base_cooldown_reduction > 0.9f) {
+        throw std::runtime_error("base_cooldown_reduction must be in [0, 0.9].");
+    }
+    if (cfg.base_crit_chance < 0.0f || cfg.base_crit_chance >= 1.0f || cfg.base_crit_multiplier < 1.0f) {
+        throw std::runtime_error("base crit fields invalid.");
+    }
+    if (cfg.damage_multiplier <= 0.0f || cfg.aoe_radius_multiplier <= 0.0f ||
+        cfg.final_damage_taken_multiplier <= 0.0f) {
+        throw std::runtime_error("combat multipliers must be > 0.");
+    }
+    if (cfg.projectile_count_bonus < 0) {
+        throw std::runtime_error("projectile_count_bonus must be >= 0.");
+    }
+    if (cfg.regen_hp_per_sec < 0.0f || cfg.life_steal < 0.0f || cfg.life_steal > 1.0f) {
+        throw std::runtime_error("defense.regen_hp_per_sec/life_steal out of range.");
+    }
+    if (cfg.evasion < 0.0f || cfg.evasion > 0.95f || cfg.block_chance < 0.0f || cfg.block_chance > 0.95f) {
+        throw std::runtime_error("defense.evasion/block_chance out of range.");
     }
 
     return cfg;
@@ -787,6 +1186,17 @@ sim::core::LevelDesignConfig ConfigLoader::LoadLevelDesign(const std::string& pa
         }
         difficulty_csv_path = GetString(difficulty_csv->AsObject(), "file", difficulty_csv_path, false);
     }
+    if (const JsonValue* weapon_projectile = root.TryGet("weapon_projectile"); weapon_projectile != nullptr) {
+        if (!weapon_projectile->IsObject()) {
+            throw std::runtime_error("level_design.weapon_projectile must be object.");
+        }
+        cfg.projectile_weapon_config_file = GetString(
+            weapon_projectile->AsObject(),
+            "file",
+            cfg.projectile_weapon_config_file,
+            false
+        );
+    }
 
     cfg.monster_defs = LoadMonsterDefCsv(monster_csv_path);
     cfg.difficulty_rows = LoadLevelDifficultyCsv(
@@ -794,6 +1204,7 @@ sim::core::LevelDesignConfig ConfigLoader::LoadLevelDesign(const std::string& pa
         cfg.spawn_scenario_id,
         cfg.spawn_variant_id
     );
+    cfg.projectile_weapon_def = LoadProjectileWeaponJson(cfg.projectile_weapon_config_file);
 
     if (cfg.spawn_events.empty()) {
         throw std::runtime_error("No spawn events loaded.");

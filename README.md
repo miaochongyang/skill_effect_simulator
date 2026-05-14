@@ -15,7 +15,7 @@
 ```text
 simulator_battle/
 ├─ config/
-│  ├─ player_build.json
+│  ├─ player_profile_template.json
 │  └─ level_design.json
 ├─ src/
 │  ├─ core/       # 核心数据结构（配置/技能/波次/Hitbox）
@@ -36,9 +36,8 @@ simulator_battle/
 1. `WaveSystem`：按时间轴激活怪物到对象池。
 2. `MovementSystem`：怪物朝玩家移动并结算贴脸伤害。
 3. `UniformGrid::Rebuild`：重建空间桶链表。
-4. `SkillSystem`：技能 CD 递减并产出 Hitbox 事件。
-5. `CombatSystem`：仅查询命中域覆盖的网格单元并结算伤害/死亡。
-6. `MetricsLogger`：更新峰值、时间线、累计伤害与击杀。
+4. `ProjectileWeaponSystem`：按武器冷却发射弹体、推进弹道、做局部碰撞并结算伤害/暴击/穿透。
+5. `MetricsLogger`：更新峰值、时间线、累计伤害与击杀。
 
 ### 3.2 ECS / DOD 实现重点
 
@@ -49,20 +48,20 @@ simulator_battle/
 
 ## 4. 配置文件
 
-## `config/player_build.json`
+## `config/player_profile_template.json`
 
-控制角色基础属性与技能表。
+控制角色基础属性、成长、战斗乘区与武器绑定。
 
 字段说明：
 
-- `player_hp`：初始生命值（`> 0`）。
-- `max_survival_time_sec`：最大生存时间上限（秒，`> 0`）。
-- `skills[]`：技能数组。
-- `skills[].id`：技能标识（内置示例：`garlic`、`sword_ring`）。
-- `skills[].cooldown`：技能冷却（秒，`> 0`）。
-- `skills[].radius`：判定半径（`> 0`）。
-- `skills[].damage`：单次伤害（`>= 0`）。
-- `skills[].max_targets`：单次最多命中目标数（`> 0`）。
+- `simulation.player_hp`：初始生命值（`> 0`）。
+- `simulation.max_survival_time_sec`：最大生存时间上限（秒，`> 0`）。
+- `base_stats`：基础攻击/暴击/冷却缩减等。
+- `combat`：伤害倍率、投射物加成、受伤倍率等。
+- `defense.regen_hp_per_sec/life_steal`：回血与吸血（当前已接入结算）。
+- `progression.stat_growth.time_growth`：随时间成长（当前已接入攻击与生命上限成长）。
+- `loadout.weapon_bindings[slot=main_ranged].weapon_file`：主武器文件路径（当前会覆盖 `level_design.weapon_projectile.file`）。
+- 详细定义见 `docs/player_profile_template.md`。
 
 ## `config/level_design.json`
 
@@ -81,6 +80,8 @@ simulator_battle/
 - `spawn_csv.max_spawn_per_tick_budget`：同 Tick 预算上限（导入校验）。
 - `monster_csv.file`：怪物基础能力表（`config/monster_def.csv`）。
 - `difficulty_csv.file`：难度系数表（`config/level_difficulty.csv`）。
+- `weapon_projectile.file`：远程弹道武器配置（`config/weapon_projectile_standard.json`）。
+- `config/player_profile_template.json`：主角全量属性模板（扩展框架，见 `docs/player_profile_template.md`）。
 - 详细事件字段见 `docs/spawn_developer_manual.md` 与 `config/spawn_events.csv`。
 
 ## 多表串联规则
@@ -133,7 +134,7 @@ Windows 下可执行文件通常为：
 ## 8. 常见问题
 
 - **启动报配置错误**：检查 `spawn_csv` 必填字段、CSV 列完整性、`trigger_tick` 及预算校验。
-- **技能统计异常**：检查 `player_build.json` 是否出现重复 `skill_id`（已在加载时校验）。
+- **角色属性异常**：检查 `player_profile_template.json` 的范围约束（如 `base_cooldown_reduction`、`life_steal`、`crit_chance`）。
 - **刷怪不足**：检查 `pool.max_monsters` 是否过小，或战斗节奏导致池持续占满。
 
 ## 9. 后续扩展方向

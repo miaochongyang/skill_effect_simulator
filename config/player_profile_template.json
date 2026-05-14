@@ -1,0 +1,136 @@
+{
+  "schema_version": "v1",
+  "profile_id": "default_survivor_v1",
+  "display_name": "Default Survivor",
+  "simulation": {
+    "player_hp": 1500.0,
+    "max_survival_time_sec": 1800.0
+  },
+  "base_stats": {
+    "max_hp": 1500.0,
+    "base_attack_power": 1.0,
+    "base_attack_speed": 1.0,
+    "base_cooldown_reduction": 0.0,
+    "base_crit_chance": 0.05,
+    "base_crit_multiplier": 1.5,
+    "base_luck": 0.0
+  },
+  "combat": {
+    "damage_multiplier": 1.0,
+    "projectile_count_bonus": 0,
+    "aoe_radius_multiplier": 1.0,
+    "status_power_multiplier": 1.0,
+    "final_damage_taken_multiplier": 1.0
+  },
+  "defense": {
+    "armor": 0.0,
+    "evasion": 0.0,
+    "block_chance": 0.0,
+    "block_flat_reduction": 0.0,
+    "regen_hp_per_sec": 0.0,
+    "life_steal": 0.0
+  },
+  "movement": {
+    "move_speed": 5.0,
+    "move_speed_multiplier": 1.0,
+    "pickup_radius": 2.5,
+    "dash": {
+      "enabled": false,
+      "cooldown_sec": 6.0,
+      "duration_sec": 0.25,
+      "distance": 4.0
+    }
+  },
+  "resource": {
+    "xp_gain_multiplier": 1.0,
+    "gold_gain_multiplier": 1.0,
+    "reroll_count": 0,
+    "banish_count": 0,
+    "revive_count": 0
+  },
+  "progression": {
+    "level_curve": {
+      "base_xp_for_level_2": 10.0,
+      "xp_growth_ratio": 1.12
+    },
+    "stat_growth": {
+      "time_growth": {
+        "k_hp": 0.0009,
+        "k_atk": 0.0007
+      },
+      "level_growth": {
+        "atk_k1": 0.03,
+        "atk_k2": 0.001,
+        "hp_k1": 0.04,
+        "hp_k2": 0.0015
+      }
+    }
+  },
+  "loadout": {
+    "skills": [
+      {
+        "id": "garlic",
+        "cooldown": 0.45,
+        "radius": 4.2,
+        "damage": 9.0,
+        "max_targets": 1000000
+      },
+      {
+        "id": "sword_ring",
+        "cooldown": 1.05,
+        "radius": 8.4,
+        "damage": 24.0,
+        "max_targets": 80
+      }
+    ],
+    "passives": [
+      {
+        "id": "vitality",
+        "stacks": 0,
+        "params": {
+          "max_hp_bonus_per_stack": 0.08
+        }
+      },
+      {
+        "id": "haste",
+        "stacks": 0,
+        "params": {
+          "cooldown_reduction_per_stack": 0.03
+        }
+      }
+    ],
+    "weapon_bindings": [
+      {
+        "slot": "main_ranged",
+        "weapon_file": "config/weapon_projectile_standard.json",
+        "enabled": true
+      }
+    ]
+  },
+  "rules": {
+    "target_priority": "nearest",
+    "collision_policy": "discrete_tick",
+    "rng_stream_id": "player_default_stream"
+  },
+  "reference_only_fields": [
+    "combat.status_power_multiplier",
+    "defense.armor",
+    "defense.evasion",
+    "defense.block_chance",
+    "defense.block_flat_reduction",
+    "movement.move_speed",
+    "movement.move_speed_multiplier",
+    "movement.pickup_radius",
+    "movement.dash",
+    "resource.xp_gain_multiplier",
+    "resource.gold_gain_multiplier",
+    "resource.reroll_count",
+    "resource.banish_count",
+    "resource.revive_count"
+  ],
+  "analysis_tags": [
+    "baseline",
+    "starter",
+    "balanced"
+  ]
+}

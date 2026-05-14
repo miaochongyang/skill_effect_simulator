@@ -28,8 +28,7 @@ add_executable(simulator_battle
         src/spatial/uniform_grid.cpp
         src/systems/wave_system.cpp
         src/systems/movement_system.cpp
-        src/systems/skill_system.cpp
-        src/systems/combat_system.cpp
+        src/systems/projectile_weapon_system.cpp
         src/systems/game_director.cpp
         src/io/metrics_logger.cpp
         src/io/json_value.cpp

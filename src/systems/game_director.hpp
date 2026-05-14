@@ -7,7 +7,7 @@
 #include "io/metrics_logger.hpp"
 #include "spatial/uniform_grid.hpp"
 #include "systems/movement_system.hpp"
-#include "systems/skill_system.hpp"
+#include "systems/projectile_weapon_system.hpp"
 #include "systems/wave_system.hpp"
 
 namespace sim::systems {
@@ -16,7 +16,7 @@ class GameDirector {
 public:
     explicit GameDirector(float player_contact_radius);
 
-    void Init(const sim::core::PlayerBuildConfig& player_cfg, const sim::core::LevelDesignConfig& level_cfg);
+    void Init(const sim::core::PlayerProfileConfig& profile_cfg, const sim::core::LevelDesignConfig& level_cfg);
     void Run();
     void ExportMetrics(
         const std::string& summary_path,
@@ -36,7 +36,7 @@ private:
     sim::spatial::UniformGrid grid_{};
     sim::systems::WaveSystem wave_system_{};
     sim::systems::MovementSystem movement_system_;
-    sim::systems::SkillSystem skill_system_{};
+    sim::systems::ProjectileWeaponSystem projectile_weapon_system_{};
     sim::io::MetricsLogger metrics_{};
 };
 
